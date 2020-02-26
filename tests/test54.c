@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "utstring.h"
 
-int main() {
+int main()
+{
     UT_string *s, *t;
 
     utstring_new(s);
@@ -14,7 +15,7 @@ int main() {
     utstring_printf(t, "there " );
 
     utstring_concat(s, t);
-    printf("length: %u\n", utstring_len(s));
+    printf("length: %u\n", (unsigned)utstring_len(s));
     printf("%s\n", utstring_body(s));
 
     utstring_free(s);

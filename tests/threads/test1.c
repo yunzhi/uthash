@@ -11,7 +11,7 @@
 #include "uthash.h"
 
 #undef uthash_noexpand_fyi
-#define uthash_noexpand_fyi fprintf(stderr,"warning: bucket expansion inhibited\n");
+#define uthash_noexpand_fyi(tbl) fprintf(stderr,"warning: bucket expansion inhibited\n")
 
 #define LOOPS 100000
 
@@ -30,12 +30,12 @@ void *thread_routine_r( void *arg ) {
 
     for(i=0;i<LOOPS;i++) {
       if (pthread_rwlock_rdlock(&lock) != 0) {
-        fprintf(stderr,"can't acquire readlock\n");
+        fprintf(stderr,"can't acquire read lock\n");
         exit(-1);
       }
       HASH_FIND_INT(elts, &i, e);
-      pthread_rwlock_unlock(&lock);
       if (e) num_found++;
+      pthread_rwlock_unlock(&lock);
     }
     return (void*)num_found;
 }
@@ -77,19 +77,19 @@ int main() {
       exit(-1);
     }
 
-    if ( status = pthread_create( &thread_r1, NULL, thread_routine_r, NULL )) {
+    if (( status = pthread_create( &thread_r1, NULL, thread_routine_r, NULL) )) {
         printf("failure: status %d\n", status);
         exit(-1);
     }
-    if ( status = pthread_create( &thread_r2, NULL, thread_routine_r, NULL )) {
+    if (( status = pthread_create( &thread_r2, NULL, thread_routine_r, NULL) )) {
         printf("failure: status %d\n", status);
         exit(-1);
     }
-    if ( status = pthread_create( &thread_w1, NULL, thread_routine_w, NULL )) {
+    if (( status = pthread_create( &thread_w1, NULL, thread_routine_w, NULL) )) {
         printf("failure: status %d\n", status);
         exit(-1);
     }
-    if ( status = pthread_create( &thread_w2, NULL, thread_routine_w, NULL )) {
+    if (( status = pthread_create( &thread_w2, NULL, thread_routine_w, NULL) )) {
         printf("failure: status %d\n", status);
         exit(-1);
     }
@@ -108,4 +108,9 @@ int main() {
 
     i = HASH_COUNT(elts);
     printf("final count of items in hash: %u\n", i);
+
+    if (pthread_rwlock_destroy(&lock) != 0) {
+      fprintf(stderr,"lock destroy failed\n");
+      exit(-1);
+    }
 }

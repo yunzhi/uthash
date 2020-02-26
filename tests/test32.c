@@ -10,30 +10,32 @@ typedef struct el {
     struct el *next, *prev;
 } el;
 
-int namecmp(el *a, el *b) {
-    return strcmp(a->bname,b->bname);
-}
-
-el *head = NULL;
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     el *name, *tmp;
+    el *head = NULL;
 
     char linebuf[BUFLEN];
     FILE *file;
 
-    if ( (file = fopen( "test11.dat", "r" )) == NULL ) {
+    file = fopen( "test11.dat", "r" );
+    if (file == NULL) {
         perror("can't open: ");
         exit(-1);
     }
 
     while (fgets(linebuf,BUFLEN,file) != NULL) {
-        if ( (name = (el*)malloc(sizeof(el))) == NULL) exit(-1);
-        strncpy(name->bname,linebuf,BUFLEN);
+        name = (el*)malloc(sizeof(el));
+        if (name == NULL) {
+            exit(-1);
+        }
+        strcpy(name->bname, linebuf);
         DL_PREPEND(head, name);
     }
     /* DL_SORT(head, namecmp); */
-    DL_FOREACH(head,tmp) printf("%s", tmp->bname);
+    DL_FOREACH(head,tmp) {
+        printf("%s", tmp->bname);
+    }
 
     fclose(file);
 

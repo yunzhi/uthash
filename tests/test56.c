@@ -18,18 +18,19 @@ typedef struct el {
     struct el *next, *prev;
 } el;
 
-int namecmp(void *_a, void *_b) {
+static int namecmp(void *_a, void *_b)
+{
     el *a = (el*)_a;
     el *b = (el*)_b;
     return strcmp(a->bname,b->bname);
 }
 
-el *head = NULL; /* important- initialize to NULL! */
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     el *name, *elt, *tmp, etmp;
     int i;
     example_user_t *user, *users=NULL;
+    el *head = NULL; /* important- initialize to NULL! */
 
     char linebuf[BUFLEN];
     FILE *file;
@@ -37,33 +38,44 @@ int main(int argc, char *argv[]) {
     UT_string *s;
     char binary[] = "\xff\xff";
 
-    if ( (file = fopen( "test11.dat", "r" )) == NULL ) {
+    file = fopen( "test11.dat", "r" );
+    if (file == NULL) {
         perror("can't open: ");
         exit(-1);
     }
 
     while (fgets(linebuf,BUFLEN,file) != NULL) {
-        if ( (name = (el*)malloc(sizeof(el))) == NULL) exit(-1);
-        strncpy(name->bname,linebuf,BUFLEN);
+        name = (el*)malloc(sizeof(el));
+        if (name == NULL) {
+            exit(-1);
+        }
+        strcpy(name->bname, linebuf);
         DL_APPEND(head, name);
     }
     DL_SORT(head, namecmp);
-    DL_FOREACH(head,elt) printf("%s", elt->bname);
+    DL_FOREACH(head,elt) {
+        printf("%s", elt->bname);
+    }
 
-    memcpy(&etmp.bname, "WES\n", 5);
+    memcpy(etmp.bname, "WES\n", 5UL);
     DL_SEARCH(head,elt,&etmp,namecmp);
-    if (elt) printf("found %s\n", elt->bname);
+    if (elt != NULL) {
+        printf("found %s\n", elt->bname);
+    }
 
     /* now delete each element, use the safe iterator */
     DL_FOREACH_SAFE(head,elt,tmp) {
-      DL_DELETE(head,elt);
+        DL_DELETE(head,elt);
     }
 
     fclose(file);
 
     /* create elements */
-    for(i=0;i<10;i++) {
-        if ( (user = (example_user_t*)malloc(sizeof(example_user_t))) == NULL) exit(-1);
+    for(i=0; i<10; i++) {
+        user = (example_user_t*)malloc(sizeof(example_user_t));
+        if (user == NULL) {
+            exit(-1);
+        }
         user->id = i;
         user->cookie = i*i;
         HASH_ADD_INT(users,id,user);
@@ -75,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     utstring_new(s);
     utstring_bincpy(s, binary, sizeof(binary));
-    printf("length is %u\n", utstring_len(s));
+    printf("length is %u\n", (unsigned)utstring_len(s));
 
     utstring_clear(s);
     utstring_printf(s,"number %d", 10);

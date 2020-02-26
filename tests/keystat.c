@@ -12,9 +12,10 @@
 #define uthash_noexpand_fyi(t) die()
 #define UNALIGNED_KEYS 0
 
-void die() {
-  fprintf(stderr,"expansion inhibited\n");
-  exit(-1);
+static void die()
+{
+    fprintf(stderr,"expansion inhibited\n");
+    exit(-1);
 }
 
 /* Windows doesn't have gettimeofday. While Cygwin and some
@@ -22,16 +23,17 @@ void die() {
  * gives much more accurate elapsed times under Windows. */
 #if (( defined __CYGWIN__ ) || ( defined __MINGW32__ ))
 #include <windows.h>
-void win_gettimeofday(struct timeval* p, void* tz /* IGNORED */) {
-  LARGE_INTEGER q;
-  static long long freq;
-  static long long cyg_timer;
-  QueryPerformanceFrequency(&q);
-  freq = q.QuadPart;
-  QueryPerformanceCounter(&q);
-  cyg_timer = q.QuadPart;
-  p->tv_sec = (long)(cyg_timer / freq);
-  p->tv_usec = (long)(((cyg_timer % freq) * 1000000) / freq);
+static void win_gettimeofday(struct timeval* p, void* tz /* IGNORED */)
+{
+    LARGE_INTEGER q;
+    static long long freq;
+    static long long cyg_timer;
+    QueryPerformanceFrequency(&q);
+    freq = q.QuadPart;
+    QueryPerformanceCounter(&q);
+    cyg_timer = q.QuadPart;
+    p->tv_sec = (long)(cyg_timer / freq);
+    p->tv_usec = (long)(((cyg_timer % freq) * 1000000) / freq);
 }
 #define gettimeofday win_gettimeofday
 #define MODE (O_RDONLY|O_BINARY)
@@ -63,38 +65,55 @@ typedef struct stat_key {
 #define CHAIN_20  3
 #define CHAIN_100 4
 #define CHAIN_MAX 5
-void hash_chain_len_histogram(UT_hash_table *tbl) {
-  unsigned i, bkt_hist[CHAIN_MAX+1];
-  double pct = 100.0/tbl->num_buckets;
-  memset(bkt_hist,0,sizeof(bkt_hist));
-  for(i=0; i < tbl->num_buckets; i++) {
-      unsigned count = tbl->buckets[i].count;
-      if (count == 0) bkt_hist[CHAIN_0]++;
-      else if (count < 5) bkt_hist[CHAIN_5]++;
-      else if (count < 10) bkt_hist[CHAIN_10]++;
-      else if (count < 20) bkt_hist[CHAIN_20]++;
-      else if (count < 100) bkt_hist[CHAIN_100]++;
-      else bkt_hist[CHAIN_MAX]++;
-  }
-  fprintf(stderr, "Buckets with     0 items: %.1f%%\n", bkt_hist[CHAIN_0 ]*pct);
-  fprintf(stderr, "Buckets with <   5 items: %.1f%%\n", bkt_hist[CHAIN_5 ]*pct);
-  fprintf(stderr, "Buckets with <  10 items: %.1f%%\n", bkt_hist[CHAIN_10]*pct);
-  fprintf(stderr, "Buckets with <  20 items: %.1f%%\n", bkt_hist[CHAIN_20]*pct);
-  fprintf(stderr, "Buckets with < 100 items: %.1f%%\n", bkt_hist[CHAIN_100]*pct);
-  fprintf(stderr, "Buckets with > 100 items: %.1f%%\n", bkt_hist[CHAIN_MAX]*pct);
+static void hash_chain_len_histogram(const UT_hash_table *tbl)
+{
+    unsigned i, bkt_hist[CHAIN_MAX+1];
+    double pct = 100.0/(double)tbl->num_buckets;
+    memset(bkt_hist,0,sizeof(bkt_hist));
+    for(i=0; i < tbl->num_buckets; i++) {
+        unsigned count = tbl->buckets[i].count;
+        if (count == 0U) {
+            bkt_hist[CHAIN_0]++;
+        } else if (count < 5U) {
+            bkt_hist[CHAIN_5]++;
+        } else if (count < 10U) {
+            bkt_hist[CHAIN_10]++;
+        } else if (count < 20U) {
+            bkt_hist[CHAIN_20]++;
+        } else if (count < 100U) {
+            bkt_hist[CHAIN_100]++;
+        } else {
+            bkt_hist[CHAIN_MAX]++;
+        }
+    }
+    fprintf(stderr, "Buckets with     0 items: %.1f%%\n", (double)bkt_hist[CHAIN_0 ]*pct);
+    fprintf(stderr, "Buckets with <   5 items: %.1f%%\n", (double)bkt_hist[CHAIN_5 ]*pct);
+    fprintf(stderr, "Buckets with <  10 items: %.1f%%\n", (double)bkt_hist[CHAIN_10]*pct);
+    fprintf(stderr, "Buckets with <  20 items: %.1f%%\n", (double)bkt_hist[CHAIN_20]*pct);
+    fprintf(stderr, "Buckets with < 100 items: %.1f%%\n", (double)bkt_hist[CHAIN_100]*pct);
+    fprintf(stderr, "Buckets with > 100 items: %.1f%%\n", (double)bkt_hist[CHAIN_MAX]*pct);
 }
 
-int main(int argc, char *argv[]) {
-    int dups=0, rc, fd, done=0, err=0, want, i=0, padding=0, v=1, percent=100;
+int main(int argc, char *argv[])
+{
+    int dups=0, rc, fd, done=0, err=0, want, i, padding=0, v=1, percent=100;
     unsigned keylen, max_keylen=0, verbose=0;
     const char *filename = "/dev/stdin";
     char *dst;
     stat_key *keyt, *keytmp, *keys=NULL, *keys2=NULL;
     struct timeval start_tm, end_tm, elapsed_tm, elapsed_tm2, elapsed_tm3;
 
-    if ((argc >= 3) && !strcmp(argv[1],"-p")) {percent = atoi(argv[2]); v = 3;}
-    if ((argc >= v) && !strcmp(argv[v],"-v")) {verbose=1; v++;}
-    if (argc >= v) filename=argv[v];
+    if ((argc >= 3) && (strcmp(argv[1],"-p") == 0)) {
+        percent = atoi(argv[2]);
+        v = 3;
+    }
+    if ((v < argc) && (strcmp(argv[v],"-v") == 0)) {
+        verbose=1;
+        v++;
+    }
+    if (v < argc) {
+        filename=argv[v];
+    }
     fd=open(filename,MODE);
 
     if ( fd == -1 ) {
@@ -102,79 +121,95 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    for(i=0; !done; i++) {
+    for(i=0; done==0; i++) {
 
-          want = sizeof(int);
-          dst = (char*)&keylen;
-          readmore1:
-          rc = read(fd,dst,want);
-          if (rc != want) {
-              if (rc == 0) done=1;
-              else if (rc == -1) {
+        want = sizeof(int);
+        dst = (char*)&keylen;
+readmore1:
+        rc = read(fd,dst,want);
+        if (rc != want) {
+            if (rc == 0) {
+                done=1;
+            } else if (rc == -1) {
                 fprintf(stderr,"read failed: %s\n", strerror(errno));
                 err=1;
-              }
-              else if (rc > 0) { want -= rc; dst += rc; goto readmore1; }
-          }
+            } else if (rc > 0) {
+                want -= rc;
+                dst += rc;
+                goto readmore1;
+            }
+        }
 
-          if (done || err) break;
-          if (keylen > max_keylen) max_keylen=keylen;
+        if (done || err) {
+            break;
+        }
+        if (keylen > max_keylen) {
+            max_keylen=keylen;
+        }
 
-          if ( (keyt = (stat_key*)malloc(sizeof(stat_key))) == NULL) {
-              fprintf(stderr,"out of memory\n");
-              exit(-1);
-          }
+        keyt = (stat_key*)malloc(sizeof(stat_key));
+        if (keyt == NULL) {
+            fprintf(stderr,"out of memory\n");
+            exit(-1);
+        }
 
-          /* read key */
+        /* read key */
 #ifdef UNALIGNED_KEYS
-          padding = i%8;
+        padding = i%8;
 #endif
-          if ( (keyt->key = (char*)malloc(padding+keylen)) == NULL) {
-              fprintf(stderr,"out of memory\n");
-              exit(-1);
-          }
-          keyt->key += padding; /* forcibly alter the alignment of key */
-          keyt->len = keylen;
+        keyt->key = (char*)malloc(padding+keylen);
+        if (keyt->key == NULL) {
+            fprintf(stderr,"out of memory\n");
+            exit(-1);
+        }
+        keyt->key += padding; /* forcibly alter the alignment of key */
+        keyt->len = keylen;
 
-          want = keylen;
-          dst = keyt->key;
-          readmore2:
-          rc = read(fd,dst,want);
-          if (rc != want) {
-              if (rc == -1) {
+        want = keylen;
+        dst = keyt->key;
+readmore2:
+        rc = read(fd,dst,want);
+        if (rc != want) {
+            if (rc == -1) {
                 fprintf(stderr,"read failed: %s\n", strerror(errno));
                 err=1;
-              } else if (rc == 0) {
+            } else if (rc == 0) {
                 fprintf(stderr,"incomplete file\n");
                 err=1;
-              } else if (rc >= 0) { want -= rc; dst += rc; goto readmore2; }
-          }
-          if (err) break;
-          /* if percent was set to something less than 100%, skip some keys*/
-          if (((rand()*1.0) / RAND_MAX) > ((percent*1.0)/100)) {
+            } else if (rc >= 0) {
+                want -= rc;
+                dst += rc;
+                goto readmore2;
+            }
+        }
+        if (err != 0) {
+            break;
+        }
+        /* if percent was set to something less than 100%, skip some keys*/
+        if (((rand()*1.0) / RAND_MAX) > ((percent*1.0)/100)) {
             free(keyt->key-padding);
             free(keyt);
             continue;
-          }
+        }
 
-          /* eliminate dups */
-          HASH_FIND(hh,keys,keyt->key,keylen,keytmp);
-          if (keytmp) {
-              dups++;
-              free(keyt->key - padding);
+        /* eliminate dups */
+        HASH_FIND(hh,keys,keyt->key,keylen,keytmp);
+        if (keytmp != NULL) {
+            dups++;
+            free(keyt->key - padding);
             free(keyt);
-          } else {
+        } else {
             HASH_ADD_KEYPTR(hh,keys,keyt->key,keylen,keyt);
-          }
+        }
     }
 
-    if (verbose) {
-      unsigned key_count = HASH_COUNT(keys);
-      fprintf(stderr,"max key length: %u\n", max_keylen);
-      fprintf(stderr,"number unique keys: %u\n", key_count);
-      fprintf(stderr,"keystats memory: %u\n",
-        (unsigned)((sizeof(stat_key)+max_keylen)*key_count));
-      hash_chain_len_histogram(keys->hh.tbl);
+    if (verbose != 0) {
+        unsigned key_count = HASH_COUNT(keys);
+        fprintf(stderr,"max key length: %u\n", max_keylen);
+        fprintf(stderr,"number unique keys: %u\n", key_count);
+        fprintf(stderr,"keystats memory: %u\n",
+                (unsigned)((sizeof(stat_key)+max_keylen)*key_count));
+        hash_chain_len_histogram(keys->hh.tbl);
     }
 
     /* add all keys to a new hash, so we can measure add time w/o malloc */
@@ -189,31 +224,32 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start_tm,NULL);
     for(keyt = keys; keyt != NULL; keyt=(stat_key*)keyt->hh.next) {
         HASH_FIND(hh2,keys2,keyt->key,keyt->len,keytmp);
-        if (!keytmp) fprintf(stderr,"internal error, key not found\n");
+        if (keytmp == NULL) {
+            fprintf(stderr,"internal error, key not found\n");
+        }
     }
     gettimeofday(&end_tm,NULL);
     timersub(&end_tm, &start_tm, &elapsed_tm2);
 
     /* now delete all items in the new hash, measuring elapsed time */
     gettimeofday(&start_tm,NULL);
-    while (keys2) {
+    while (keys2 != NULL) {
         keytmp = keys2;
         HASH_DELETE(hh2,keys2,keytmp);
     }
     gettimeofday(&end_tm,NULL);
     timersub(&end_tm, &start_tm, &elapsed_tm3);
 
-    if (!err) {
-        printf("%.3f,%d,%d,%d,%s,%ld,%ld,%ld\n",
-        1-(1.0*keys->hh.tbl->nonideal_items/keys->hh.tbl->num_items),
-        keys->hh.tbl->num_items,
-        keys->hh.tbl->num_buckets,
-        dups,
-        (keys->hh.tbl->noexpand ? "nx" : "ok"),
-        (elapsed_tm.tv_sec * 1000000) + elapsed_tm.tv_usec,
-        (elapsed_tm2.tv_sec * 1000000) + elapsed_tm2.tv_usec,
-        (elapsed_tm3.tv_sec * 1000000) + elapsed_tm3.tv_usec );
+    if (err == 0) {
+        printf("%.3f,%u,%u,%d,%s,%ld,%ld,%ld\n",
+               1-(1.0*keys->hh.tbl->nonideal_items/keys->hh.tbl->num_items),
+               keys->hh.tbl->num_items,
+               keys->hh.tbl->num_buckets,
+               dups,
+               (keys->hh.tbl->noexpand != 0U) ? "nx" : "ok",
+               (elapsed_tm.tv_sec * 1000000) + elapsed_tm.tv_usec,
+               (elapsed_tm2.tv_sec * 1000000) + elapsed_tm2.tv_usec,
+               (elapsed_tm3.tv_sec * 1000000) + elapsed_tm3.tv_usec );
     }
-  return 0;
+    return 0;
 }
-

@@ -11,7 +11,7 @@
 #include "uthash.h"
 
 #undef uthash_noexpand_fyi
-#define uthash_noexpand_fyi fprintf(stderr,"warning: bucket expansion inhibited\n");
+#define uthash_noexpand_fyi(tbl) fprintf(stderr,"warning: bucket expansion inhibited\n");
 
 #define LOOPS 100000
 #define NTHREADS 2
@@ -54,7 +54,7 @@ int main() {
     }
 
     for(i=0; i<NTHREADS; i++) {
-      if ( status = pthread_create( &thread[i], NULL, thread_routine, NULL )) {
+      if (( status = pthread_create( &thread[i], NULL, thread_routine, NULL) )) {
           printf("failure: status %d\n", status);
           exit(-1);
       }
@@ -67,4 +67,9 @@ int main() {
 
     i = HASH_COUNT(elts);
     printf("final count of items in hash: %u\n", i);
+
+    if (pthread_rwlock_destroy(&lock) != 0) {
+      fprintf(stderr,"lock destroy failed\n");
+      exit(-1);
+    }
 }

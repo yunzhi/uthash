@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include "utstring.h"
 
-int main() {
+int main()
+{
     UT_string *s;
     char binary[] = "\xff\xff";
 
     utstring_new(s);
     utstring_bincpy(s, binary, sizeof(binary));
-    printf("length is %u\n", utstring_len(s));
+    printf("length is %u\n", (unsigned)utstring_len(s));
 
     utstring_clear(s);
     utstring_printf(s,"number %d", 10);

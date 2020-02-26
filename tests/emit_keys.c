@@ -14,7 +14,8 @@ typedef struct name_rec {
     UT_hash_handle hh;
 } name_rec;
 
-int main(int argc,char *argv[]) {
+int main(int argc,char *argv[])
+{
     name_rec *name, *names=NULL;
     char linebuf[BUFLEN];
     FILE *file;
@@ -31,8 +32,11 @@ int main(int argc,char *argv[]) {
     }
 
     while (fgets(linebuf,BUFLEN,file) != NULL) {
-        if ( (name = (name_rec*)malloc(sizeof(name_rec))) == NULL) exit(-1);
-        strncpy(name->boy_name,linebuf,BUFLEN);
+        name = (name_rec*)malloc(sizeof(name_rec));
+        if (name == NULL) {
+            exit(-1);
+        }
+        strcpy(name->boy_name, linebuf);
         HASH_ADD_STR(names,boy_name,name);
         i++;
     }
